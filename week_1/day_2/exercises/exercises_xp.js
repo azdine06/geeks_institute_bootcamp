@@ -152,4 +152,182 @@ totalVacationCost();
 
 
 
-// ===== Exercise ...
+// ===== Exercise 5
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Users</title>
+</head>
+<body>
+
+  <div id="container">Users:</div>
+
+  <ul class="list">
+    <li>John</li>
+    <li>Pete</li>
+  </ul>
+
+  <ul class="list">
+    <li>David</li>
+    <li>Sarah</li>
+    <li>Dan</li>
+  </ul>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+
+{/* // 1. Récupérer le div et l'afficher dans la console */}
+const container = document.getElementById("container");
+console.log(container);
+
+{/* // 2. Changer "Pete" en "Richard" */}
+const allLi = document.querySelectorAll("li");
+allLi[1].textContent = "Richard";
+
+{/* // 3. Supprimer le deuxième <li> du deuxième <ul> */}
+const allUl = document.querySelectorAll("ul");
+allUl[1].removeChild(allUl[1].children[1]);
+
+// 4. Changer le nom du premier <li> de chaque <ul> par ton nom
+const myName = "Azdine";
+allUl.forEach(ul => {
+  ul.children[0].textContent = myName;
+});
+
+{/* // 5. Ajouter la classe "student_list" aux deux <ul> */}
+allUl.forEach(ul => {
+  ul.classList.add("student_list");
+});
+
+{/* // 6. Ajouter les classes "university" et "attendance" au premier <ul> */}
+allUl[0].classList.add("university", "attendance");
+
+{/* // 7. Style du div */}
+container.style.backgroundColor = "lightblue";
+container.style.padding = "10px";
+
+{/* // 8. Ne pas afficher le <li> contenant "Dan" */}
+const liDan = Array.from(document.querySelectorAll("li"))
+  .find(li => li.textContent === "Dan");
+
+if (liDan) {
+  liDan.style.display = "none";
+}
+
+{/* // 9. Ajouter une bordure au <li> contenant "Richard" */}
+const liRichard = Array.from(document.querySelectorAll("li"))
+  .find(li => li.textContent === "Richard");
+
+if (liRichard) {
+  liRichard.style.border = "2px solid black";
+}
+
+{/* // 10. Changer la taille de police du body */}
+document.body.style.fontSize = "18px";
+
+{/* // BONUS */}
+if (container.style.backgroundColor === "lightblue") {
+  const users = Array.from(document.querySelectorAll("li"))
+    .map(li => li.textContent)
+    .join(" and ");
+  
+  alert(`Hello ${users}`);
+}
+
+// ===== Exercise 6
+<div id="navBar">
+  <ul>
+    <li><a href="#">Profile</a></li>
+    <li><a href="#">Home</a></li>
+    <li><a href="#">My Friends</a></li>
+    <li><a href="#">Messenger</a></li>
+    <li><a href="#">My Pics</a></li>
+  </ul>
+</div>
+
+<script src="script.js"></script>
+
+{/* // 1-Changer l’id du <div> avec setAttribute */}
+const navDiv = document.getElementById("navBar");
+navDiv.setAttribute("id", "socialNetworkNavigation");
+
+{/* Ajouter un nouveau <li> avec le texte Logout */}
+const ul = navDiv.querySelector("ul");
+
+{/* // créer <li> */}
+const newLi = document.createElement("li");
+
+{/* // créer le texte */}
+const text = document.createTextNode("Logout");
+
+{/* // ajouter le texte au <li> */}
+newLi.appendChild(text);
+
+{/* // ajouter le <li> au <ul> */}
+ul.appendChild(newLi);
+
+{/* //Récupérer le premier et le dernier <li> et afficher leur texte */}
+const firstLi = ul.firstElementChild;
+const lastLi = ul.lastElementChild;
+
+console.log("Premier lien :", firstLi.textContent);
+console.log("Dernier lien :", lastLi.textContent);
+ {/* ===== Exercise 7 */}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Book List</title>
+</head>
+<body>
+
+  <section class="listBooks"></section>
+
+  <script src="script.js"></script>
+</body>
+</html>
+ 
+ // script.js
+
+const allBooks = [
+  {
+    title: "Harry Potter",
+    author: "J.K. Rowling",
+    image: "https://covers.openlibrary.org/b/id/7984916-L.jpg",
+    alreadyRead: true,
+  },
+  {
+    title: "The Hobbit",
+    author: "J.R.R. Tolkien",
+    image: "https://covers.openlibrary.org/b/id/6979861-L.jpg",
+    alreadyRead: false,
+  },
+];
+
+const section = document.querySelector(".listBooks");
+
+allBooks.forEach((book) => {
+  const bookDiv = document.createElement("div");
+
+  const details = document.createElement("p");
+  details.textContent = `${book.title} written by ${book.author}`;
+
+  if (book.alreadyRead) {
+    details.style.color = "red";
+  }
+
+  const img = document.createElement("img");
+  img.src = book.image;
+  img.style.width = "100px";
+
+  bookDiv.appendChild(details);
+  bookDiv.appendChild(img);
+
+  section.appendChild(bookDiv);
+});
