@@ -1,168 +1,80 @@
-// Web Audio API context
+// Configuration des sons
+const soundConfig = {
+    A: { freq: 60, type: 'sine', gain: 0.3, duration: 0.5, name: 'Boom' },
+    S: { freq: 1000, type: 'square', gain: 0.2, duration: 0.1, name: 'Clap' },
+    D: { freq: 8000, type: 'square', gain: 0.15, duration: 0.05, name: 'HiHat' },
+    F: { freq: 150, type: 'sine', gain: 0.4, duration: 0.3, name: 'Kick', pitchBend: 40 },
+    G: { freq: 6000, type: 'square', gain: 0.15, duration: 0.15, name: 'OpenHat' },
+    H: { freq: 3000, type: 'sawtooth', gain: 0.12, duration: 0.2, name: 'Ride' },
+    J: { freq: 200, type: 'triangle', gain: 0.25, duration: 0.2, name: 'Snare' },
+    K: { freq: 10000, type: 'sine', gain: 0.1, duration: 0.03, name: 'Tink' },
+    L: { freq: 120, type: 'sine', gain: 0.3, duration: 0.4, name: 'Tom' }
+};
+
 let audioContext = null;
 
-// Initialiser l'AudioContext après une interaction utilisateur
-function initAudioContext() {
+// Initialiser l'AudioContext
+function getAudioContext() {
     if (!audioContext) {
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('✅ AudioContext initialized:', audioContext.state);
-
-            // Reprendre le contexte s'il est suspendu
-            if (audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    console.log('✅ AudioContext resumed');
-                });
-            }
-        } catch (error) {
-            console.error('❌ Error initializing AudioContext:', error);
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
         }
     }
     return audioContext;
 }
 
-// Fonction pour créer des sons synthétiques
-function createSound(type) {
-    try {
-        const ctx = initAudioContext();
-        if (!ctx) {
-            console.error('❌ AudioContext not available');
-            return;
-        }
+// Créer et jouer un son
+function createSound(letter) {
+    const config = soundConfig[letter];
+    if (!config) return;
 
-        // S'assurer que le contexte est actif
-        if (ctx.state === 'suspended') {
-            ctx.resume();
-        }
+    const ctx = getAudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
 
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
 
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
+    oscillator.type = config.type;
+    oscillator.frequency.value = config.freq;
+    gainNode.gain.setValueAtTime(config.gain, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + config.duration);
 
-        console.log(`🎵 Playing sound: ${type}`);
-
-        // Configuration selon le type de son
-        switch (type) {
-            case 'A': // Boom - son grave
-                oscillator.frequency.value = 60;
-                oscillator.type = 'sine';
-                gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.5);
-                break;
-            case 'S': // Clap - bruit blanc court
-                oscillator.frequency.value = 1000;
-                oscillator.type = 'square';
-                gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.1);
-                break;
-            case 'D': // HiHat - son aigu court
-                oscillator.frequency.value = 8000;
-                oscillator.type = 'square';
-                gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.05);
-                break;
-            case 'F': // Kick - son très grave
-                oscillator.frequency.value = 150;
-                oscillator.type = 'sine';
-                gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                // Pitch bend pour effet kick
-                oscillator.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.1);
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.3);
-                break;
-            case 'G': // OpenHat - son aigu moyen
-                oscillator.frequency.value = 6000;
-                oscillator.type = 'square';
-                gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.15);
-                break;
-            case 'H': // Ride - son métallique
-                oscillator.frequency.value = 3000;
-                oscillator.type = 'sawtooth';
-                gainNode.gain.setValueAtTime(0.12, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.2);
-                break;
-            case 'J': // Snare - son percussif
-                oscillator.frequency.value = 200;
-                oscillator.type = 'triangle';
-                gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.2);
-                break;
-            case 'K': // Tink - son aigu très court
-                oscillator.frequency.value = 10000;
-                oscillator.type = 'sine';
-                gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.03);
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.03);
-                break;
-            case 'L': // Tom - son grave moyen
-                oscillator.frequency.value = 120;
-                oscillator.type = 'sine';
-                gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-                oscillator.start(ctx.currentTime);
-                oscillator.stop(ctx.currentTime + 0.4);
-                break;
-            default:
-                console.warn(`⚠️ Unknown sound type: ${type}`);
-        }
-    } catch (error) {
-        console.error(`❌ Error creating sound for ${type}:`, error);
+    // Effet pitch bend pour le kick
+    if (config.pitchBend) {
+        oscillator.frequency.exponentialRampToValueAtTime(config.pitchBend, ctx.currentTime + 0.1);
     }
+
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + config.duration);
 }
 
+// Jouer le son et ajouter l'effet visuel
 function playSound(letter) {
-    const key = document.querySelector(`.key[data-key="${letter.toUpperCase()}"]`);
+    const upperLetter = letter.toUpperCase();
+    const key = document.querySelector(`.key[data-key="${upperLetter}"]`);
 
-    if (!key) {
-        console.warn(`⚠️ Key not found for letter: ${letter}`);
-        return;
+    if (key) {
+        createSound(upperLetter);
+        key.classList.add('playing');
     }
-
-    // Jouer le son synthétique
-    createSound(letter.toUpperCase());
-
-    // Ajouter l'effet visuel
-    key.classList.add('playing');
 }
 
-// Écouter les touches du clavier
-window.addEventListener('keydown', (e) => {
-    playSound(e.key);
-});
+// Événements clavier
+window.addEventListener('keydown', (e) => playSound(e.key));
 
-// Écouter les clics sur les touches
-const keys = document.querySelectorAll('.key');
-keys.forEach(key => {
+// Événements clic
+document.querySelectorAll('.key').forEach(key => {
     key.addEventListener('click', function () {
-        const letter = this.querySelector('kbd').textContent;
-        playSound(letter);
+        playSound(this.querySelector('kbd').textContent);
     });
-});
 
-// Retirer l'animation après la transition
-keys.forEach(key => {
     key.addEventListener('transitionend', function (e) {
-        if (e.propertyName !== 'transform') return;
-        this.classList.remove('playing');
+        if (e.propertyName === 'transform') {
+            this.classList.remove('playing');
+        }
     });
 });
 
-// Message de bienvenue
-console.log('🥁 Drum Kit chargé! Cliquez sur un pad ou appuyez sur A-S-D-F-G-H-J-K-L');
+console.log('🥁 Drum Kit chargé! Appuyez sur A-S-D-F-G-H-J-K-L');
