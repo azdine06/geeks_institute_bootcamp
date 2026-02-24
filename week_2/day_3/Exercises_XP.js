@@ -59,9 +59,9 @@ class Person {
   
 //Exercice 6
 
-[2] === [2] 
+// [2] === [2] 
 //false
-{} === {}
+// {} === {}
 //false
 
 const object1 = { number: 5 }; 
