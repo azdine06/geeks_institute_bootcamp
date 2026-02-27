@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Toe</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --border: #2e2e2e;
+    --accent: #e8ff47;
+    --accent2: #ff6b6b;
+    --text: #f0f0f0;
+    --muted: #555;
+    --x-color: #e8ff47;
+    --o-color: #ff6b6b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px;
+    background-image: radial-gradient(circle at 20% 20%, #1a1f0a 0%, transparent 50%),
+                      radial-gradient(circle at 80% 80%, #1f0a0a 0%, transparent 50%);
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    letter-spacing: 4px;
+    color: var(--text);
+    text-align: center;
+  }
+
+  h1 span { color: var(--accent); }
+
+  /* Symbol chooser */
+  .chooser {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .chooser label {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+
+  .choose-btn {
+    width: 52px; height: 52px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+
+  .choose-btn.active-x {
+    border-color: var(--x-color);
+    color: var(--x-color);
+    background: #1f2200;
+  }
+
+  .choose-btn.active-o {
+    border-color: var(--o-color);
+    color: var(--o-color);
+    background: #200c0c;
+  }
+
+  /* Difficulty */
+  .difficulty {
+    display: flex;
+    gap: 8px;
+  }
+
+  .diff-btn {
+    padding: 6px 18px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .diff-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #1a1f00;
+  }
+
+  /* Status */
+  .status {
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    min-height: 1.2em;
+    text-align: center;
+    transition: color 0.2s;
+  }
+
+  .status.win { color: var(--accent); }
+  .status.lose { color: var(--o-color); }
+  .status.tie { color: #888; }
+
+  /* Board */
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 2px solid var(--border);
+    background: var(--border);
+    width: min(360px, 90vw);
+    aspect-ratio: 1;
+  }
+
+  .cell {
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    cursor: pointer;
+    border: 0;
+    outline: none;
+    transition: background 0.1s;
+    position: relative;
+    user-select: none;
+  }
+
+  .cell:hover:not(.taken) {
+    background: #222;
+  }
+
+  .cell.X { color: var(--x-color); }
+  .cell.O { color: var(--o-color); }
+
+  .cell.win-cell {
+    background: #1a1f00;
+    animation: flash 0.4s ease;
+  }
+  .cell.win-cell.O { background: #200c0c; }
+
+  @keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .cell.pop {
+    animation: pop 0.15s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.6); }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* Gap lines */
+  .board { gap: 2px; }
+
+  /* Restart */
+  .restart-btn {
+    padding: 10px 32px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: none;
+  }
+
+  .restart-btn.show {
+    display: block;
+  }
+
+  .restart-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Score */
+  .score {
+    display: flex;
+    gap: 32px;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .score span { color: var(--text); font-size: 1.1rem; }
+</style>
+</head>
+<body>
+
+<h1>TIC<span>TAC</span>TOE</h1>
+
+<!-- Symbol chooser -->
+<div class="chooser">
+  <label>Play as</label>
+  <button class="choose-btn active-x" id="btnX" onclick="chooseSymbol('X')">X</button>
+  <button class="choose-btn" id="btnO" onclick="chooseSymbol('O')">O</button>
+</div>
+
+<!-- Difficulty -->
+<div class="difficulty">
+  <button class="diff-btn active" id="easy" onclick="setDifficulty('easy')">Easy</button>
+  <button class="diff-btn" id="hard" onclick="setDifficulty('hard')">Hard</button>
+</div>
+
+<!-- Score -->
+<div class="score">
+  <div>You <span id="scorePlayer">0</span></div>
+  <div>AI <span id="scoreAI">0</span></div>
+  <div>Tie <span id="scoreTie">0</span></div>
+</div>
+
+<!-- Status -->
+<p class="status" id="status">Your turn</p>
+
+<!-- Board -->
+<div class="board" id="board">
+  <button class="cell" id="c0" onclick="playerMove(0)"></button>
+  <button class="cell" id="c1" onclick="playerMove(1)"></button>
+  <button class="cell" id="c2" onclick="playerMove(2)"></button>
+  <button class="cell" id="c3" onclick="playerMove(3)"></button>
+  <button class="cell" id="c4" onclick="playerMove(4)"></button>
+  <button class="cell" id="c5" onclick="playerMove(5)"></button>
+  <button class="cell" id="c6" onclick="playerMove(6)"></button>
+  <button class="cell" id="c7" onclick="playerMove(7)"></button>
+  <button class="cell" id="c8" onclick="playerMove(8)"></button>
+</div>
+
+<button class="restart-btn" id="restartBtn" onclick="restartGame()">↺ Play Again</button>
+
+<script>
+  const winCombos = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[6,4,2]
+  ];
+
+  let board = Array(9).fill('');
+  let playerSymbol = 'X';
+  let aiSymbol = 'O';
+  let difficulty = 'easy';
+  let gameOver = false;
+  let scores = { player: 0, ai: 0, tie: 0 };
+
+  function chooseSymbol(sym) {
+    playerSymbol = sym;
+    aiSymbol = sym === 'X' ? 'O' : 'X';
+    document.getElementById('btnX').className = 'choose-btn' + (sym === 'X' ? ' active-x' : '');
+    document.getElementById('btnO').className = 'choose-btn' + (sym === 'O' ? ' active-o' : '');
+    restartGame();
+  }
+
+  function setDifficulty(d) {
+    difficulty = d;
+    document.getElementById('easy').classList.toggle('active', d === 'easy');
+    document.getElementById('hard').classList.toggle('active', d === 'hard');
+    restartGame();
+  }
+
+  function restartGame() {
+    board = Array(9).fill('');
+    gameOver = false;
+    document.querySelectorAll('.cell').forEach(c => {
+      c.textContent = '';
+      c.className = 'cell';
+    });
+    setStatus('Your turn', '');
+    document.getElementById('restartBtn').classList.remove('show');
+
+    // If player chose O, AI goes first
+    if (playerSymbol === 'O') {
+      setTimeout(aiMove, 400);
+    }
+  }
+
+  function setStatus(msg, type) {
+    const s = document.getElementById('status');
+    s.textContent = msg;
+    s.className = 'status' + (type ? ' ' + type : '');
+  }
+
+  function playerMove(idx) {
+    if (gameOver || board[idx] !== '') return;
+    makeMove(idx, playerSymbol);
+    if (gameOver) return;
+    setStatus("AI is thinking...", '');
+    setTimeout(aiMove, 350);
+  }
+
+  function makeMove(idx, symbol) {
+    board[idx] = symbol;
+    const cell = document.getElementById('c' + idx);
+    cell.textContent = symbol;
+    cell.classList.add(symbol, 'taken', 'pop');
+
+    const result = checkWinner(board);
+    if (result) {
+      endGame(result);
+    } else if (board.every(c => c !== '')) {
+      endGame('tie');
+    }
+  }
+
+  function aiMove() {
+    if (gameOver) return;
+    const idx = difficulty === 'hard' ? bestMove() : randomMove();
+    makeMove(idx, aiSymbol);
+    if (!gameOver) setStatus('Your turn', '');
+  }
+
+  function randomMove() {
+    const empty = board.reduce((acc, v, i) => v === '' ? [...acc, i] : acc, []);
+    return empty[Math.floor(Math.random() * empty.length)];
+  }
+
+  function bestMove() {
+    // Minimax
+    let best = -Infinity, move = -1;
+    board.forEach((v, i) => {
+      if (v === '') {
+        board[i] = aiSymbol;
+        const score = minimax(board, 0, false);
+        board[i] = '';
+        if (score > best) { best = score; move = i; }
+      }
+    });
+    return move;
+  }
+
+  function minimax(b, depth, isMax) {
+    const result = checkWinner(b);
+    if (result === aiSymbol) return 10 - depth;
+    if (result === playerSymbol) return depth - 10;
+    if (b.every(c => c !== '')) return 0;
+
+    if (isMax) {
+      let best = -Infinity;
+      b.forEach((v, i) => {
+        if (v === '') {
+          b[i] = aiSymbol;
+          best = Math.max(best, minimax(b, depth + 1, false));
+          b[i] = '';
+        }
+      });
+      return best;
+    } else {
+      let best = Infinity;
+      b.forEach((v, i) => {
+        if (v === '') {
+          b[i] = playerSymbol;
+          best = Math.min(best, minimax(b, depth + 1, true));
+          b[i] = '';
+        }
+      });
+      return best;
+    }
+  }
+
+  function checkWinner(b) {
+    for (const [a, c, d] of winCombos) {
+      if (b[a] && b[a] === b[c] && b[a] === b[d]) return b[a];
+    }
+    return null;
+  }
+
+  function endGame(result) {
+    gameOver = true;
+    document.getElementById('restartBtn').classList.add('show');
+
+    if (result === 'tie') {
+      setStatus('Tie game', 'tie');
+      scores.tie++;
+      document.getElementById('scoreTie').textContent = scores.tie;
+      return;
+    }
+
+    // Highlight winning cells
+    for (const combo of winCombos) {
+      const [a, b, c] = combo;
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        [a, b, c].forEach(i => {
+          document.getElementById('c' + i).classList.add('win-cell');
+        });
+        break;
+      }
+    }
+
+    if (result === playerSymbol) {
+      setStatus('🎉 You win!', 'win');
+      scores.player++;
+      document.getElementById('scorePlayer').textContent = scores.player;
+    } else {
+      setStatus('AI wins!', 'lose');
+      scores.ai++;
+      document.getElementById('scoreAI').textContent = scores.ai;
+    }
+  }
+</script>
+</body>
+</html>
