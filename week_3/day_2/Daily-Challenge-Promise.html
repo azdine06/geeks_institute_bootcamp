@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sunrise Finder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Josefin+Sans:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky-deep:   #0d0d1a;
+      --sky-mid:    #1a1535;
+      --sky-dawn:   #3d2b5e;
+      --horizon:    #c96b3a;
+      --gold:       #f4c97a;
+      --cream:      #fdf3e3;
+      --muted:      rgba(253,243,227,0.45);
+      --border:     rgba(244,201,122,0.18);
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--sky-deep);
+      color: var(--cream);
+      font-family: 'Josefin Sans', sans-serif;
+      font-weight: 300;
+    }
+
+    /* Sky background gradient that animates subtly */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 110%, rgba(201,107,58,0.22) 0%, transparent 70%),
+        radial-gradient(ellipse 120% 80% at 50% 100%, rgba(61,43,94,0.6) 0%, transparent 60%),
+        linear-gradient(180deg, #0d0d1a 0%, #1a1535 60%, #2a1a40 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Stars */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 15% 12%, rgba(255,255,255,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 73% 8%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 42% 22%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 88% 18%, rgba(255,255,255,0.55) 0%, transparent 100%),
+        radial-gradient(1px 1px at 5% 35%, rgba(255,255,255,0.35) 0%, transparent 100%),
+        radial-gradient(1px 1px at 63% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 30% 5%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 95% 40%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 52% 15%, rgba(255,255,255,0.45) 0%, transparent 100%),
+        radial-gradient(1px 1px at 20% 48%, rgba(255,255,255,0.3) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .eyebrow {
+      font-size: 0.62rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.7;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(2.6rem, 7vw, 4.4rem);
+      letter-spacing: 0.06em;
+      line-height: 1.1;
+      color: var(--cream);
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .tagline {
+      margin-top: 14px;
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Sun ornament */
+    .sun-ornament {
+      width: 48px;
+      height: 48px;
+      margin: 24px auto 0;
+      position: relative;
+    }
+
+    .sun-ornament svg {
+      width: 100%;
+      height: 100%;
+      animation: slowSpin 24s linear infinite;
+    }
+
+    @keyframes slowSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Form grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      margin-bottom: 32px;
+      border: 1px solid var(--border);
+    }
+
+    @media (max-width: 580px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    .city-panel {
+      background: rgba(255,255,255,0.03);
+      padding: 36px 32px;
+      position: relative;
+      backdrop-filter: blur(4px);
+    }
+
+    .city-panel:first-child {
+      border-right: 1px solid var(--border);
+    }
+
+    @media (max-width: 580px) {
+      .city-panel:first-child {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+
+    .panel-label {
+      font-size: 0.58rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      font-family: 'Josefin Sans', sans-serif;
+      font-weight: 300;
+      font-size: 1.05rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      letter-spacing: 0.06em;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus {
+      border-color: var(--gold);
+      background: rgba(244,201,122,0.06);
+    }
+
+    input[type="number"]::placeholder {
+      color: rgba(253,243,227,0.2);
+      font-size: 0.85rem;
+    }
+
+    /* Presets */
+    .presets {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .preset-btn {
+      font-family: 'Josefin Sans', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 5px 11px;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* Submit */
+    .submit-wrap {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    button[type="button"]#fetch-btn {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 16px 52px;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button[type="button"]#fetch-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+      z-index: -1;
+    }
+
+    button[type="button"]#fetch-btn:hover {
+      color: var(--sky-deep);
+    }
+
+    button[type="button"]#fetch-btn:hover::before {
+      transform: scaleX(1);
+    }
+
+    button[type="button"]#fetch-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Loader */
+    .loader-wrap {
+      text-align: center;
+      padding: 20px;
+      display: none;
+    }
+
+    .loader-wrap.active { display: block; }
+
+    .loader-dots {
+      display: inline-flex;
+      gap: 8px;
+    }
+
+    .loader-dots span {
+      width: 6px;
+      height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Results */
+    #results {
+      display: none;
+      animation: riseUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    #results.visible { display: block; }
+
+    @keyframes riseUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .results-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .results-header p {
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0;
+      align-items: center;
+    }
+
+    @media (max-width: 520px) {
+      .results-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .divider-col { display: none; }
+    }
+
+    .result-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      padding: 40px 36px;
+      text-align: center;
+    }
+
+    .result-city {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 14px;
+    }
+
+    .result-time {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-weight: 300;
+      color: var(--cream);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .result-label {
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .result-sunset {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .result-sunset .result-time {
+      font-size: clamp(1.4rem, 3.5vw, 2rem);
+      color: var(--gold);
+      opacity: 0.8;
+    }
+
+    .divider-col {
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    .divider-col svg {
+      width: 36px;
+      height: 36px;
+      opacity: 0.4;
+    }
+
+    /* Error */
+    .error-msg {
+      text-align: center;
+      color: #e07070;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      padding: 16px;
+      border: 1px solid rgba(224,112,112,0.3);
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <p class="eyebrow">Sunrise & Sunset</p>
+    <h1>When does the <em>sun</em> rise?</h1>
+    <p class="tagline">Compare two cities simultaneously</p>
+    <div class="sun-ornament">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="24" r="9" stroke="#f4c97a" stroke-width="1"/>
+        <line x1="24" y1="2" x2="24" y2="8" stroke="#f4c97a" stroke-width="1" stroke-linecap="round"/>
+        <line x1="24" y1="40" x2="24" y2="46" stroke="#f4c97a" stroke-width="1" stroke-linecap="round"/>
+        <line x1="2" y1="24" x2="8" y2="24" stroke="#f4c97a" stroke-width="1" stroke-linecap="round"/>
+        <line x1="40" y1="24" x2="46" y2="24" stroke="#f4c97a" stroke-width="1" stroke-linecap="round"/>
+        <line x1="8.69" y1="8.69" x2="12.95" y2="12.95" stroke="#f4c97a" stroke-width="1" stroke-linecap="round"/>
+        <line x1="35.05" y1="35.05" x2="39.31" y2="39.31" stroke="#f4c97a" stroke-width="1" stroke-linecap="round"/>
+        <line x1="39.31" y1="8.69" x2="35.05" y2="12.95" stroke="#f4c97a" stroke-width="1" stroke-linecap="round"/>
+        <line x1="12.95" y1="35.05" x2="8.69" y2="39.31" stroke="#f4c97a" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </header>
+
+  <!-- Form -->
+  <div class="form-grid">
+    <div class="city-panel">
+      <p class="panel-label">City One</p>
+      <div class="field">
+        <label>Latitude</label>
+        <input type="number" id="lat1" placeholder="e.g. 48.864716" step="any"/>
+      </div>
+      <div class="field">
+        <label>Longitude</label>
+        <input type="number" id="lng1" placeholder="e.g. 2.349014" step="any"/>
+      </div>
+      <div class="presets">
+        <button class="preset-btn" onclick="setCity(1, 48.864716, 2.349014, 'Paris')">Paris</button>
+        <button class="preset-btn" onclick="setCity(1, 40.730610, -73.935242, 'New York')">New York</button>
+        <button class="preset-btn" onclick="setCity(1, 35.6762, 139.6503, 'Tokyo')">Tokyo</button>
+      </div>
+    </div>
+
+    <div class="city-panel">
+      <p class="panel-label">City Two</p>
+      <div class="field">
+        <label>Latitude</label>
+        <input type="number" id="lat2" placeholder="e.g. 40.730610" step="any"/>
+      </div>
+      <div class="field">
+        <label>Longitude</label>
+        <input type="number" id="lng2" placeholder="e.g. -73.935242" step="any"/>
+      </div>
+      <div class="presets">
+        <button class="preset-btn" onclick="setCity(2, 48.864716, 2.349014, 'Paris')">Paris</button>
+        <button class="preset-btn" onclick="setCity(2, 40.730610, -73.935242, 'New York')">New York</button>
+        <button class="preset-btn" onclick="setCity(2, 35.6762, 139.6503, 'Tokyo')">Tokyo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <div class="submit-wrap">
+    <button type="button" id="fetch-btn" onclick="fetchBoth()">Find Sunrise Times</button>
+  </div>
+
+  <div class="loader-wrap" id="loader">
+    <div class="loader-dots"><span></span><span></span><span></span></div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="results-header">
+      <p>Today's sunrise & sunset — UTC</p>
+    </div>
+    <div class="results-grid">
+      <div class="result-card" id="card1">
+        <p class="result-city" id="city1-label">City One</p>
+        <p class="result-time" id="sunrise1">—</p>
+        <p class="result-label">Sunrise</p>
+        <div class="result-sunset">
+          <p class="result-time" id="sunset1">—</p>
+          <p class="result-label">Sunset</p>
+        </div>
+      </div>
+
+      <div class="divider-col">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="18" cy="18" r="6" stroke="#f4c97a" stroke-width="0.8"/>
+          <line x1="18" y1="2" x2="18" y2="6" stroke="#f4c97a" stroke-width="0.8"/>
+          <line x1="18" y1="30" x2="18" y2="34" stroke="#f4c97a" stroke-width="0.8"/>
+          <line x1="2" y1="18" x2="6" y2="18" stroke="#f4c97a" stroke-width="0.8"/>
+          <line x1="30" y1="18" x2="34" y2="18" stroke="#f4c97a" stroke-width="0.8"/>
+        </svg>
+      </div>
+
+      <div class="result-card" id="card2">
+        <p class="result-city" id="city2-label">City Two</p>
+        <p class="result-time" id="sunrise2">—</p>
+        <p class="result-label">Sunrise</p>
+        <div class="result-sunset">
+          <p class="result-time" id="sunset2">—</p>
+          <p class="result-label">Sunset</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const cityNames = { 1: '', 2: '' };
+
+  function setCity(num, lat, lng, name) {
+    document.getElementById(`lat${num}`).value = lat;
+    document.getElementById(`lng${num}`).value = lng;
+    cityNames[num] = name;
+  }
+
+  function formatTime(utcStr) {
+    // API returns times like "6:12:34 AM"
+    return utcStr.replace(/:(\d\d) (AM|PM)$/, ' $2').replace(/^(\d):/, '0$1:').split(':').slice(0,2).join(':') + ' ' + utcStr.split(' ')[1];
+  }
+
+  function fetchSunrise(lat, lng) {
+    const url = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=1`;
+    return fetch(url).then(res => {
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      return res.json();
+    }).then(data => {
+      if (data.status !== 'OK') throw new Error('API returned non-OK status');
+      return data.results;
+    });
+  }
+
+  async function fetchBoth() {
+    const lat1 = document.getElementById('lat1').value.trim();
+    const lng1 = document.getElementById('lng1').value.trim();
+    const lat2 = document.getElementById('lat2').value.trim();
+    const lng2 = document.getElementById('lng2').value.trim();
+
+    const errEl = document.getElementById('error-msg');
+    errEl.classList.remove('visible');
+
+    if (!lat1 || !lng1 || !lat2 || !lng2) {
+      errEl.textContent = 'Please fill in all four coordinates before fetching.';
+      errEl.classList.add('visible');
+      return;
+    }
+
+    const btn = document.getElementById('fetch-btn');
+    btn.disabled = true;
+    document.getElementById('loader').classList.add('active');
+    document.getElementById('results').classList.remove('visible');
+
+    try {
+      const [res1, res2] = await Promise.all([
+        fetchSunrise(lat1, lng1),
+        fetchSunrise(lat2, lng2)
+      ]);
+
+      document.getElementById('city1-label').textContent = cityNames[1] || `${parseFloat(lat1).toFixed(2)}, ${parseFloat(lng1).toFixed(2)}`;
+      document.getElementById('city2-label').textContent = cityNames[2] || `${parseFloat(lat2).toFixed(2)}, ${parseFloat(lng2).toFixed(2)}`;
+
+      document.getElementById('sunrise1').textContent = formatTime(res1.sunrise);
+      document.getElementById('sunset1').textContent  = formatTime(res1.sunset);
+      document.getElementById('sunrise2').textContent = formatTime(res2.sunrise);
+      document.getElementById('sunset2').textContent  = formatTime(res2.sunset);
+
+      document.getElementById('results').classList.add('visible');
+    } catch (err) {
+      errEl.textContent = `Error: ${err.message}`;
+      errEl.classList.add('visible');
+    } finally {
+      btn.disabled = false;
+      document.getElementById('loader').classList.remove('active');
+    }
+  }
+</script>
+</body>
+</html>
